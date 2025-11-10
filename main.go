@@ -6,6 +6,43 @@ import (
 	"os"
 )
 
+// --- DEFINICIÓN DE TIPOS SECUNDARIOS (PARA CLARIDAD Y FACILIDAD DE INICIALIZACIÓN) ---
+
+// PlateNodeInfoStruct ahora es un tipo con nombre
+type PlateNodeInfoStruct struct {
+	Text            string `xml:",chardata"`
+	Guid            string `xml:"Guid,attr"`
+	Guid00          string `xml:"Guid00,attr"`
+	PlateName       string `xml:"PlateName,attr"`
+	IsRectangle     string `xml:"IsRectangle,attr"`
+	PlateProcessNum string `xml:"PlateProcessNum,attr"`
+	TotalNum        string `xml:"TotalNum,attr"`
+	Width           string `xml:"Width,attr"`
+	Height          string `xml:"Height,attr"`
+	UtilizationRate string `xml:"UtilizationRate,attr"`
+	PlateGrade      string `xml:"PlateGrade,attr"`
+}
+
+// PlateBoardPntStruct para los puntos individuales
+type PlateBoardPntStruct struct {
+	Text string `xml:",chardata"`
+	X    string `xml:"x,attr"`
+	Y    string `xml:"y,attr"`
+	Bul  string `xml:"bul,attr"`
+}
+
+// PlateBoardPnt1sStruct para el contenedor de puntos
+type PlateBoardPnt1sStruct struct {
+	Text          string `xml:",chardata"`
+	PlateBoardPnt []PlateBoardPntStruct `xml:"PlateBoardPnt"`
+}
+
+// PlateBoardPntsStruct para el contenedor principal de los puntos
+type PlateBoardPntsStruct struct {
+	Text          string `xml:",chardata"`
+	PlateBoardPnt1s PlateBoardPnt1sStruct `xml:"PlateBoardPnt1s"`
+}
+
 // PlateSkeleton es una estructura separada para mejorar la legibilidad
 type PlateSkeleton struct {
 	Text           string `xml:",chardata"`
@@ -25,36 +62,13 @@ type PlateSkeleton struct {
 	Shapes string `xml:"shapes"`
 }
 
-// PlateNodeStruct es una estructura separada para PlateNode
+// PlateNodeStruct ahora usa los tipos con nombre
 type PlateNodeStruct struct {
 	Text              string `xml:",chardata"`
-	PlateNodeInfo struct {
-		Text            string `xml:",chardata"`
-		Guid            string `xml:"Guid,attr"`
-		Guid00          string `xml:"Guid00,attr"`
-		PlateName       string `xml:"PlateName,attr"`
-		IsRectangle     string `xml:"IsRectangle,attr"`
-		PlateProcessNum string `xml:"PlateProcessNum,attr"`
-		TotalNum        string `xml:"TotalNum,attr"`
-		Width           string `xml:"Width,attr"`
-		Height          string `xml:"Height,attr"`
-		UtilizationRate string `xml:"UtilizationRate,attr"`
-		PlateGrade      string `xml:"PlateGrade,attr"`
-	} `xml:"PlateNodeInfo"`
+	PlateNodeInfo     PlateNodeInfoStruct `xml:"PlateNodeInfo"`
 	Shapes            string `xml:"shapes"`
 	PlateProfilesInfo string `xml:"PlateProfilesInfo"`
-	PlateBoardPnts struct {
-		Text          string `xml:",chardata"`
-		PlateBoardPnt1s struct {
-			Text          string `xml:",chardata"`
-			PlateBoardPnt []struct {
-				Text string `xml:",chardata"`
-				X    string `xml:"x,attr"`
-				Y    string `xml:"y,attr"`
-				Bul  string `xml:"bul,attr"`
-			} `xml:"PlateBoardPnt"`
-		} `xml:"PlateBoardPnt1s"`
-	} `xml:"PlateBoardPnts"`
+	PlateBoardPnts    PlateBoardPntsStruct `xml:"PlateBoardPnts"`
 	// PlateSkeleton ahora es un puntero para manejar su ausencia
 	PlateSkeleton *PlateSkeleton `xml:"PlateSkeleton,omitempty"` 
 }
@@ -116,16 +130,15 @@ type NestParamStruct struct {
 type Root struct {
 	XMLName xml.Name `xml:"root"`
 	Text    string   `xml:",chardata"`
-	V1      string   `xml:"V1,attr,omitempty"` // Campo que faltaba/opcional
+	V1      string   `xml:"V1,attr,omitempty"` 
 	V2      string   `xml:"V2,attr"`
 	Unit    string   `xml:"unit,attr"`
 	ShowModel string `xml:"ShowModel,attr"`
-	ShowItemGuid string `xml:"ShowItemGuid,attr"` // Variable: no se pone por defecto
-	ViewX   string   `xml:"ViewX,attr"`           // Variable: no se pone por defecto
-	ViewY   string   `xml:"ViewY,attr"`           // Variable: no se pone por defecto
-	ViewScale string `xml:"ViewScale,attr"`       // Variable: no se pone por defecto
+	ShowItemGuid string `xml:"ShowItemGuid,attr"` 
+	ViewX   string   `xml:"ViewX,attr"`           
+	ViewY   string   `xml:"ViewY,attr"`           
+	ViewScale string `xml:"ViewScale,attr"`       
 	
-	// StopPos y NestParam ahora son punteros para ser opcionales (omitempty)
 	StopPos   *StopPosStruct   `xml:"StopPos,omitempty"` 
 	NestParam *NestParamStruct `xml:"NestParam,omitempty"` 
 
@@ -135,28 +148,23 @@ type Root struct {
 // createDefaultRoot inicializa la estructura Root con valores por defecto.
 func createDefaultRoot() Root {
 	return Root{
-		// Atributos con valores por defecto consistentes o que deben existir
-		// V1 se deja vacío (si falta) o se le asigna un valor común
-		V1: "1.0.18.24443", // Valor del archivo 4510x1500.xml
-		V2: "1.0.0.31202", // Valor más común
+		V1: "1.0.18.24443", 
+		V2: "1.0.0.31202", 
 		Unit: "4", 
-		ShowModel: "3", // Valor más común
+		ShowModel: "3", 
 
-		// Atributos inherentemente variables (GUID, Coordenadas) deben ser inicializados
-		// a "0" o un valor de inicio, pero no son "por defecto" en el sentido de "constante"
 		ShowItemGuid: "00000000-0000-0000-0000-000000000000",
 		ViewX: "0.0",
 		ViewY: "0.0",
 		ViewScale: "1.0",
 		
-		// StopPos y NestParam se dejan como nil por defecto.
-		// El código principal puede inicializarlos si son necesarios.
 		StopPos: nil,
 		NestParam: nil,
 
 		PlateNode: []PlateNodeStruct{
 			{
-				PlateNodeInfo: PlateNodeStruct.PlateNodeInfo{
+				// CORRECTO: Usamos el tipo con nombre PlateNodeInfoStruct
+				PlateNodeInfo: PlateNodeInfoStruct{
 					Guid: "00000000-0000-0000-0000-000000000000",
 					Guid00: "00000000-0000-0000-0000-000000000000",
 					PlateName: "Default Plate",
@@ -170,14 +178,12 @@ func createDefaultRoot() Root {
 				},
 				Shapes:            "",
 				PlateProfilesInfo: "",
-				PlateBoardPnts: PlateNodeStruct.PlateBoardPnts{
-					PlateBoardPnt1s: PlateNodeStruct.PlateBoardPnts.PlateBoardPnt1s{
-						PlateBoardPnt: []struct {
-							Text string `xml:",chardata"`
-							X    string `xml:"x,attr"`
-							Y    string `xml:"y,attr"`
-							Bul  string `xml:"bul,attr"`
-						}{
+				// CORRECTO: Usamos el tipo con nombre PlateBoardPntsStruct
+				PlateBoardPnts: PlateBoardPntsStruct{
+					// CORRECTO: Usamos el tipo con nombre PlateBoardPnt1sStruct
+					PlateBoardPnt1s: PlateBoardPnt1sStruct{
+						// CORRECTO: Usamos un slice del tipo con nombre PlateBoardPntStruct
+						PlateBoardPnt: []PlateBoardPntStruct{
 							{X: "0", Y: "0", Bul: "0"},
 							{X: "2000", Y: "0", Bul: "0"},
 							{X: "2000", Y: "1000", Bul: "0"},
@@ -186,7 +192,7 @@ func createDefaultRoot() Root {
 						},
 					},
 				},
-				PlateSkeleton: nil, // Se deja nil por defecto
+				PlateSkeleton: nil, 
 			},
 		},
 	}
@@ -255,7 +261,6 @@ func main() {
 	printXML(defaultRoot)
 
 	// 2. Ejemplo para cambiar los valores por defecto (ejemplo de inicialización de StopPos y NestParam)
-	// Inicializar y Modificar StopPos y NestParam
 	defaultRoot.StopPos = createDefaultStopPos()
 	defaultRoot.NestParam = createDefaultNestParam()
 	
@@ -281,20 +286,16 @@ func main() {
 
 // printXML serializa e imprime la estructura Root como XML
 func printXML(r Root) {
-	// Añadir encabezado XML
 	output, err := xml.MarshalIndent(r, "", "    ")
 	if err != nil {
 		fmt.Printf("Error al generar XML: %v\n", err)
 		return
 	}
 
-	// El paquete xml.MarshalIndent no incluye la declaración XML por defecto.
-	// La agregamos manualmente para un XML más estándar.
 	finalXML := xml.Header + string(output)
 	
 	fmt.Println(finalXML)
 	
-	// Escribir a un archivo para verificación
 	file, err := os.Create("output.xml")
 	if err == nil {
 	    file.Write([]byte(finalXML))
